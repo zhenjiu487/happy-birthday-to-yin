@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>21·人生新阶段 | 粒子蛋糕</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #05070c;
+        }
+        canvas { display: block; }
+
+        .info-tag {
+            position: fixed;
+            top: 22px;
+            left: 24px;
+            font-size: 0.7rem;
+            color: #c9bc96;
+            background: rgba(0,0,0,0.45);
+            padding: 5px 14px;
+            border-left: 2px solid #e6bc7e;
+            z-index: 20;
+            backdrop-filter: blur(6px);
+            pointer-events: none;
+        }
+
+        .music-control {
+            position: fixed;
+            top: 22px;
+            right: 24px;
+            z-index: 25;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(10px);
+            padding: 5px 14px;
+            font-size: 0.7rem;
+            border: 1px solid #aa8e58;
+            color: #f2e0b0;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: 0.2s;
+            pointer-events: auto;
+        }
+        .music-control:hover { background: #dbb45c; color: #12151f; }
+
+        .awaken-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 7, 12, 0.98);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease;
+        }
+        .awaken-card {
+            text-align: center;
+            border: 1px solid rgba(210, 180, 130, 0.6);
+            background: rgba(12, 15, 24, 0.75);
+            backdrop-filter: blur(20px);
+            padding: 48px 56px;
+            width: 400px;
+            max-width: 85vw;
+        }
+        .awaken-card h1 {
+            font-weight: 400;
+            letter-spacing: 3px;
+            font-size: 1.5rem;
+            color: #eadbba;
+            margin-bottom: 16px;
+        }
+        .awaken-card h2 {
+            font-size: 2.3rem;
+            font-weight: 500;
+            background: linear-gradient(135deg, #F5E6D3, #E4C590, #D4AF37);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 12px 0;
+        }
+        .awaken-trigger {
+            background: transparent;
+            border: 1.8px solid #d4a55a;
+            padding: 14px 42px;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            color: #f2e5ca;
+            cursor: pointer;
+            transition: 0.25s;
+            margin: 28px 0 24px;
+            text-transform: uppercase;
+        }
+        .awaken-trigger:hover { background: #d4a55a; color: #0a0c14; }
+        .bless-preview {
+            font-size: 0.85rem;
+            color: #b9ad86;
+            border-top: 1px dashed #6a5e3e;
+            padding-top: 20px;
+        }
+        .hidden-overlay { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .build-tip {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+            padding: 6px 20px;
+            font-size: 0.7rem;
+            color: #f3e2b0;
+            z-index: 20;
+            pointer-events: none;
+            font-family: monospace;
+            border: 1px solid #e6bc7e60;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .btn-reset {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 22, 32, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(210, 180, 140, 0.5);
+            padding: 8px 24px;
+            font-size: 0.7rem;
+            color: #e8dccc;
+            cursor: pointer;
+            z-index: 20;
+            transition: 0.2s;
+            text-transform: uppercase;
+            display: none;
+        }
+        .btn-reset:hover { background: #d4a55a; color: #0a0c14; }
+
+        /* 祝福语横幅 - 顶部居中 */
+        .blessing-banner {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(20px);
+            padding: 10px 28px;
+            border-radius: 50px;
+            color: #ffecb3;
+            font-size: 1rem;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 200;
+            pointer-events: none;
+            text-align: center;
+            letter-spacing: 1px;
+            border: 1px solid #e6bc7e;
+            box-shadow: 0 0 20px rgba(230,188,126,0.2);
+            animation: bannerFade 3s ease forwards;
+            font-family: monospace;
+        }
+        @keyframes bannerFade {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="info-tag">✦ 21 · 新生纪元 ✦</div>
+<div class="music-control" id="musicToggleBtn">🎵 静音</div>
+<div class="build-tip" id="buildTip">✨ 蛋糕正在星尘中生长 ✨</div>
+<button class="btn-reset" id="resetViewBtn">⟳ 视角复位</button>
+
+<div class="awaken-overlay" id="awakenOverlay">
+    <div class="awaken-card">
+        <h1>✦ 欢迎步入人生新阶段 ✦</h1>
+        <h2>🎂 生日快乐 🎂</h2>
+        <div class="awaken-trigger" id="awakenBtn">✦ 唤 醒 ✦</div>
+        <div class="bless-preview">「 去成为你向往的光，二十一载璨若星河 」</div>
+    </div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070c);
+    scene.fog = new THREE.FogExp2(0x05070c, 0.006);
+    
+    const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(4.5, 3.2, 6.5);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enableZoom = true;
+    controls.enablePan = true;
+    controls.target.set(0, 1.3, 0);
+    controls.enabled = false;
+    
+    const resetBtn = document.getElementById('resetViewBtn');
+    resetBtn.addEventListener('click', () => {
+        camera.position.set(4.5, 3.2, 6.5);
+        controls.target.set(0, 1.3, 0);
+        controls.update();
+    });
+    
+    // 灯光
+    const ambient = new THREE.AmbientLight(0x4a4a6a, 0.7);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xfff5e5, 1.2);
+    mainLight.position.set(3, 6, 2);
+    scene.add(mainLight);
+    const warmFill = new THREE.PointLight(0xe6bc7e, 0.65);
+    warmFill.position.set(1.2, 1.8, 1.5);
+    scene.add(warmFill);
+    const fillBack = new THREE.PointLight(0xffaa66, 0.4);
+    fillBack.position.set(-1, 1.5, -2);
+    scene.add(fillBack);
+    
+    const gridHelper = new THREE.GridHelper(9, 20, 0x8f7a4e, 0x3a2e1e);
+    gridHelper.position.y = -0.6;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.25;
+    scene.add(gridHelper);
+    
+    // 星辰背景
+    const starCount = 3000;
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let i = 0; i < starCount; i++) {
+        starPositions.push((Math.random() - 0.5) * 50);
+        starPositions.push((Math.random() - 0.5) * 20 + 1);
+        starPositions.push((Math.random() - 0.5) * 30 - 15);
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPositions), 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffddaa, size: 0.02, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+    const starsField = new THREE.Points(starGeo, starMat);
+    scene.add(starsField);
+    
+    // ========== 蛋糕粒子 ==========
+    let originalPositions = [];
+    let colorArray = [];
+    let currentPointsMesh = null;
+    let currentGeometry = null;
+    let isGrowing = false;
+    let growthStartTime = 0;
+    const GROWTH_DURATION = 3800;
+    
+    function generateCakeData() {
+        const positions = [];
+        const colors = [];
+        // 底层 - 奶油香槟
+        for (let i = 0; i < 7800; i++) {
+            const r = Math.sqrt(Math.random()) * 1.12;
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = -0.22 + Math.random() * 0.62;
+            positions.push(new THREE.Vector3(x, y, z));
+            const col = new THREE.Color().setHSL(0.11, 0.7, 0.75);
+            colors.push(col.r, col.g, col.b);
+        }
+        // 中层 - 草莓粉
+        for (let i = 0; i < 5800; i++) {
+            const r = Math.sqrt(Math.random()) * 0.89;
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = 0.28 + Math.random() * 0.52;
+            positions.push(new THREE.Vector3(x, y, z));
+            const col = new THREE.Color().setHSL(0.96, 0.8, 0.72);
+            colors.push(col.r, col.g, col.b);
+        }
+        // 顶层 - 香槟金
+        for (let i = 0; i < 4400; i++) {
+            const r = Math.sqrt(Math.random()) * 0.66;
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = 0.74 + Math.random() * 0.48;
+            positions.push(new THREE.Vector3(x, y, z));
+            const col = new THREE.Color().setHSL(0.12, 0.75, 0.78);
+            colors.push(col.r, col.g, col.b);
+        }
+        // 蜡烛
+        for (let i = 0; i < 2200; i++) {
+            const r = Math.sqrt(Math.random()) * 0.145;
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = 1.15 + Math.random() * 0.72;
+            positions.push(new THREE.Vector3(x, y, z));
+            const col = new THREE.Color().setHSL(0.12, 0.3, 0.88);
+            colors.push(col.r, col.g, col.b);
+        }
+        // 火焰
+        for (let i = 0; i < 2000; i++) {
+            const r = Math.random() * 0.14;
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = 1.85 + Math.random() * 0.25;
+            positions.push(new THREE.Vector3(x, y, z));
+            const col = new THREE.Color().setHSL(0.07, 1.0, 0.65);
+            colors.push(col.r, col.g, col.b);
+        }
+        // 彩色糖粒
+        for (let i = 0; i < 2600; i++) {
+            let yBase, radius;
+            const rType = Math.random();
+            if (rType < 0.34) { yBase = 0.08; radius = 1.16; }
+            else if (rType < 0.67) { yBase = 0.52; radius = 0.93; }
+            else { yBase = 0.95; radius = 0.70; }
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * (radius + 0.05);
+            const z = Math.sin(angle) * (radius + 0.05);
+            const y = yBase + (Math.random() - 0.5) * 0.12;
+            positions.push(new THREE.Vector3(x, y, z));
+            const hue = Math.random();
+            const col = new THREE.Color().setHSL(hue, 0.9, 0.7);
+            colors.push(col.r, col.g, col.b);
+        }
+        return { positions, colors };
+    }
+    
+    function initCakeGrowth() {
+        const data = generateCakeData();
+        originalPositions = data.positions;
+        colorArray = data.colors;
+        const total = originalPositions.length;
+        const startPositions = new Float32Array(total * 3);
+        for (let i = 0; i < total; i++) {
+            startPositions[i*3] = originalPositions[i].x;
+            startPositions[i*3+1] = -0.85;
+            startPositions[i*3+2] = originalPositions[i].z;
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(startPositions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colorArray), 3));
+        const material = new THREE.PointsMaterial({ size: 0.028, vertexColors: true, blending: THREE.AdditiveBlending });
+        currentPointsMesh = new THREE.Points(geometry, material);
+        scene.add(currentPointsMesh);
+        currentGeometry = geometry;
+        isGrowing = true;
+        growthStartTime = performance.now();
+        const tip = document.getElementById('buildTip');
+        tip.style.display = 'block';
+    }
+    
+    function updateGrowth(now) {
+        if (!isGrowing || !currentGeometry) return;
+        let t = Math.min(1, (now - growthStartTime) / GROWTH_DURATION);
+        const ease = 1 - Math.pow(1 - t, 1.5);
+        const positionsAttr = currentGeometry.attributes.position.array;
+        for (let i = 0; i < originalPositions.length; i++) {
+            const origY = originalPositions[i].y;
+            const newY = -0.85 + (origY + 0.85) * ease;
+            positionsAttr[i*3+1] = newY;
+        }
+        currentGeometry.attributes.position.needsUpdate = true;
+        if (t >= 1) {
+            isGrowing = false;
+            const tipDiv = document.getElementById('buildTip');
+            tipDiv.style.opacity = '0';
+            setTimeout(() => tipDiv.style.display = 'none', 500);
+        } else {
+            const percent = Math.floor(t * 100);
+            const tipDiv = document.getElementById('buildTip');
+            tipDiv.innerHTML = `✨ 蛋糕生长中 ${percent}% ✨`;
+        }
+    }
+    
+    // ========== 祝福语 ==========
+    const blessingList = [
+        "✨ 愿你赤诚勇敢，自在如风 ✨",
+        "🍃 二十一岁，光芒万丈的起点 🍃",
+        "🌟 去更远的地方，见更亮的光 🌟",
+        "💫 永远浪漫，永远好奇，永远少年 💫",
+        "🎈 新的一岁，与世界继续热恋 🎈",
+        "🌙 星辰大海，皆是贺礼 🌙"
+    ];
+    
+    let blessingIndex = 0;
+    let blessingInterval = null;
+    
+    function showTopBlessing(text) {
+        const div = document.createElement('div');
+        div.className = 'blessing-banner';
+        div.innerText = text;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 2800);
+    }
+    
+    function startBlessingLoop() {
+        showTopBlessing(blessingList[blessingIndex % blessingList.length]);
+        blessingIndex++;
+        blessingInterval = setInterval(() => {
+            showTopBlessing(blessingList[blessingIndex % blessingList.length]);
+            blessingIndex++;
+        }, 5500);
+    }
+    
+    function stopBlessingLoop() {
+        if (blessingInterval) {
+            clearInterval(blessingInterval);
+            blessingInterval = null;
+        }
+    }
+    
+    // ========== 音乐控制 ==========
+    const audio = new Audio();
+    audio.src = './guai.mp3';
+    audio.loop = true;
+    audio.volume = 0.55;
+    let musicPlaying = false;
+    const musicBtn = document.getElementById('musicToggleBtn');
+    
+    function startMusic() {
+        if (musicPlaying) return;
+        audio.play().then(() => {
+            musicPlaying = true;
+            musicBtn.innerHTML = '🎵 怪可爱的 ♪';
+        }).catch(e => console.log);
+    }
+    
+    function stopMusic() {
+        audio.pause();
+        musicPlaying = false;
+        musicBtn.innerHTML = '🔇 静音';
+    }
+    
+    musicBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (musicPlaying) stopMusic();
+        else startMusic();
+    });
+    
+    // 唤醒
+    const awakenOverlay = document.getElementById('awakenOverlay');
+    const awakenBtn = document.getElementById('awakenBtn');
+    
+    awakenBtn.addEventListener('click', () => {
+        awakenOverlay.classList.add('hidden-overlay');
+        setTimeout(() => { awakenOverlay.style.display = 'none'; }, 800);
+        
+        controls.enabled = true;
+        resetBtn.style.display = 'block';
+        
+        initCakeGrowth();
+        startMusic();
+        startBlessingLoop();
+    });
+    
+    // 动画主循环
+    function animate(now) {
+        requestAnimationFrame(animate);
+        if (isGrowing) updateGrowth(performance.now());
+        controls.update();
+        starsField.rotation.y += 0.0005;
+        starsField.rotation.x = Math.sin(now * 0.0003) * 0.03;
+        if (currentPointsMesh && !isGrowing) {
+            currentPointsMesh.rotation.y = Math.sin(now * 0.0006) * 0.02;
+        }
+        renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
